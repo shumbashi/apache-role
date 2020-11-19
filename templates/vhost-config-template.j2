@@ -1,0 +1,11 @@
+<VirtualHost *:80>
+    ServerAdmin		webmaster@{{ item.vhost_domain }}
+    DocumentRoot	{{ item.vhost_dir }}/{{ item.vhost_domain }}/
+    ServerName		{{ item.vhost_domain }}
+    ServerAlias		www.{{ item.vhost_domain }}
+    ErrorLog		/var/log/httpd/{{ item.vhost_domain }}-error_log
+    CustomLog		/var/log/httpd/{{ item.vhost_domain }}-access_log combine
+       <Directory {{ item.vhost_dir }}/{{ item.vhost_domain }}/>
+           Require all granted
+       </Directory>
+</VirtualHost>
