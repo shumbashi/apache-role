@@ -2,5 +2,5 @@
 # defaults file for apache-vhosts-role
 
 vhosts:
-  - {"vhost_domain": "api.hafelati.com", "vhost_dir": "/home/hafelati"}
-  - {"vhost_domain": "dashboard.hafelati.com", "vhost_dir": "/home/hafelati"}
+  - {"vhost": "api.hafelati.com", "owner": "hafelati"}
+  - {"vhost": "dashboard.hafelati.com", "owner": "hafelati"}

@@ -1,11 +1,11 @@
 <VirtualHost *:80>
-    ServerAdmin		webmaster@{{ item.vhost_domain }}
-    DocumentRoot	{{ item.vhost_dir }}/{{ item.vhost_domain }}/
-    ServerName		{{ item.vhost_domain }}
-    ServerAlias		www.{{ item.vhost_domain }}
-    ErrorLog		/var/log/httpd/{{ item.vhost_domain }}-error_log
-    CustomLog		/var/log/httpd/{{ item.vhost_domain }}-access_log combine
-       <Directory {{ item.vhost_dir }}/{{ item.vhost_domain }}/>
+    ServerAdmin		webmaster@{{ item.vhost }}
+    DocumentRoot	/home/{{ item.owner }}/{{ item.vhost }}/
+    ServerName		{{ item.vhost }}
+    ServerAlias		www.{{ item.vhost }}
+    ErrorLog		/var/log/httpd/{{ item.vhost }}-error_log
+    CustomLog		/var/log/httpd/{{ item.vhost }}-access_log combined
+       <Directory /home/{{ item.owner }}/{{ item.vhost }}/>
            Require all granted
        </Directory>
 </VirtualHost>

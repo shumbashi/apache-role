@@ -13,33 +13,57 @@
       enabled: true # not required. Whether the service should start on boot. B(At least one of state and enabled are required.)
       state: started # not required. choices: reloaded;restarted;started;stopped. C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.  C(restarted) will always bounce the service.  C(reloaded) will always reload. B(At least one of state and enabled are required.) Note that reloaded will start the service if it is not already started, even if your chosen init system wouldn't normally.
   become: true
-  
+
+- name: Configure system users
+  user:
+    name: "{{ item.owner }}" # required. Name of the user to create, remove or modify.
+    comment: "Created by Ansible" # not required. Optionally sets the description (aka I(GECOS)) of user account.
+    create_home: yes # not required. Unless set to C(no), a home directory will be made for the user when the account is created or if the home directory does not exist.,Changed from C(createhome) to C(create_home) in version 2.5.
+    home: "/home/{{ item.owner }}" # not required. Optionally set the user's home directory.      append: no # not required. If C(yes), add the user to the groups specified in C(groups).,If C(no), user will only be added to the groups specified in C(groups), removing them from all other groups.
+    state: present # not required. choices: absent;present. Whether the account should exist or not, taking action if the state is different from what is stated.
+  loop: "{{ vhosts }}"
+  become: true
+
+- name: Relax system user home dir permissions
+  file:
+      path: "/home/{{ item.owner }}" # required. Path to the file being managed.
+      state: directory # not required. choices: absent;directory;file;hard;link;touch. If C(directory), all intermediate subdirectories will be created if they do not exist. Since Ansible 1.7 they will be created with the supplied permissions. If C(file), the file will NOT be created if it does not exist; see the C(touch) value or the M(copy) or M(template) module if you want that behavior.  If C(link), the symbolic link will be created or changed. Use C(hard) for hardlinks. If C(absent), directories will be recursively deleted, and files or symlinks will be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does not exist as the state did not change. If C(touch) (new in 1.4), an empty file will be created if the C(path) does not exist, while an existing file or directory will receive updated file access and modification times (similar to the way `touch` works from the command line).
+      mode: 0711 # not required. Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an octal number (like C(0644) or C(01777)) or quote it (like C('644') or C('1777')) so Ansible receives a string and can do its own conversion from string into number.  Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results. As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
+  loop: "{{ vhosts }}"
+  become: true
+
 - name: Configure virtual hosts
   template:
     src: vhost-config-template.j2
-    dest: /etc/httpd/conf.d/{{ item.vhost_domain }}-vhost.conf
+    dest: /etc/httpd/conf.d/{{ item.vhost }}-vhost.conf
   loop: "{{ vhosts }}"
   notify: restart_httpd
   become: true
   
 - name: Create virtual Host Document Root {{ vhost_dir }}
   file:
-    path: "{{ item.vhost_dir }}/{{ item.vhost_domain }}/"
+    path: "/home/{{ item.owner }}/{{ item.vhost }}/"
     state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    seuser: system_u
+    setype: httpd_sys_content_t
   loop: "{{ vhosts }}"
   become: true
-  
+
 - name: Place Temporary Home Page
   file:
-    path: "{{ item.vhost_dir }}/{{ item.vhost_domain }}/index.html"
+    path: "/home/{{ item.owner }}/{{ item.vhost }}/index.html"
     state: touch
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
   loop: "{{ vhosts }}"
   become: true
   
 - name: Add home page contents by template
   template:
     src: vhost-index-template.j2
-    dest: "{{ item.vhost_dir }}/{{ item.vhost_domain }}/index.html"
+    dest: "/home/{{ item.owner }}/{{ item.vhost }}/index.html"
   loop: "{{ vhosts }}"
   become: true
   
